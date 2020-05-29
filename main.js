@@ -4,18 +4,24 @@ const SCENE = {
 }
 
 const PARTICLES = {
-	FRAMERATE: 2,
-	FRAMERATE_VARIATION: [0.99, 1.01],
-	AMOUNT: 75,
-	SIZE: [0.125, 0.5],
-	BASE_DURATION: 500
+	FRAMERATE: 2, // Frame-by-frame animation base framerate 
+	FRAMERATE_VARIATION: [0.99, 1.01], // Frame-by-frame animation framerate variation
+	AMOUNT: 50,
+	SIZE: [0.125, 0.5], // Coins size variation
+	BASE_DURATION: 250, // Normal duration of falling for the middle-size coin
+	PREDELAY: 1000 // Randomly time in ms "back" before the coin appears
 }
 
 class ParticleSystem extends PIXI.Container {
 	constructor(order) {
 		super(order);
+
+		this.timeStart = Date.now() + Math.round(Math.random() * PARTICLES.PREDELAY)
 		// Set start and duration for this effect in milliseconds
 		this.start    = 0;
+		this.frame		= 0
+		this.progress = 1
+		this.delay = Math.random()
 		
 		// Create a sprite
 		let sp        = game.sprite("CoinsGold000");
@@ -31,9 +37,10 @@ class ParticleSystem extends PIXI.Container {
 		// 750 - 0.25
 		// 325 - 0.5
 		sp.x 		  = Math.random() * SCENE.WIDTH;
+		sp.y = -sp.height
 
 		this.rotationRate = PARTICLES.FRAMERATE * PARTICLES.FRAMERATE_VARIATION[0] + PARTICLES.FRAMERATE * Math.random() * (PARTICLES.FRAMERATE_VARIATION[1]-PARTICLES.FRAMERATE_VARIATION[0])
-console.log(this.rotationRate)
+
 		// Add the sprite particle to our particle effect
 		this.addChild(sp);
 		// Save a reference to the sprite particle
@@ -53,15 +60,15 @@ console.log(this.rotationRate)
 
 		// Animate position
 		// this.sp.x = 100; // + timeProgress*800;
-		if (timeProgress == 0.0) {
-			console.log(timeProgress)
+		if (timeProgress < this.progress) 
 			this.sp.x = Math.random() * SCENE.WIDTH;
-		}
-
+		this.progress = timeProgress
+		
 		this.sp.y = -this.sp.height/2 + timeProgress * (SCENE.HEIGHT+this.sp.height);
 		
+		
 		// Animate scale
-9		//this.sp.scale.x = this.sp.scale.y = 0.5; // timeProgress;
+		//this.sp.scale.x = this.sp.scale.y = 0.5; // timeProgress;
 		
 		// Animate alpha
 		// this.sp.alpha = timeProgress;
@@ -128,7 +135,7 @@ class Game {
 		for (let i=0; i < this.effects.length; i++) {
 			
 			let thisEffect = this.effects[i];
-			let timeDuration = (timeGlobal - this.timeStart) % thisEffect.duration // thisEffect.totalDuration;
+			let timeDuration = (timeGlobal - thisEffect.timeStart) % thisEffect.duration // thisEffect.totalDuration;
 
 			if (timeDuration > thisEffect.start + thisEffect.duration || timeDuration < thisEffect.start) continue;
 			let estimateLeftTime = timeDuration - thisEffect.start;
@@ -148,6 +155,6 @@ class Game {
 window.onload = function(){
 	window.game = new Game({onload:function(){
 		for (let i=0; i < PARTICLES.AMOUNT; i++)
-			game.addEffect(new ParticleSystem(i));
+			game.addEffect(new ParticleSystem(i))
 	}});
 }
