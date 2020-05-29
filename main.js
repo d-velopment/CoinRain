@@ -1,33 +1,44 @@
-// ----- Start of the assigment ----- //
 const SCENE = {
 	WIDTH: 800,
 	HEIGHT: 450
 }
 
 const PARTICLES = {
-	FRAMERATE: 2
+	FRAMERATE: 2,
+	FRAMERATE_VARIATION: [0.99, 1.01],
+	AMOUNT: 75,
+	SIZE: [0.125, 0.5],
+	BASE_DURATION: 500
 }
 
 class ParticleSystem extends PIXI.Container {
-	constructor() {
-		super();
+	constructor(order) {
+		super(order);
 		// Set start and duration for this effect in milliseconds
 		this.start    = 0;
-		this.duration = 500 + Math.random() * 2000;
+		
 		// Create a sprite
 		let sp        = game.sprite("CoinsGold000");
 		// Set pivot to center of said sprite
 		sp.pivot.x    = sp.width/2;
 		sp.pivot.y    = sp.height/2;
 
-		sp.scale.x = sp.scale.y = (2500 / this.duration) * 0.5;
+		const scale = PARTICLES.SIZE[0] + order * (PARTICLES.SIZE[1]-PARTICLES.SIZE[0]) / PARTICLES.AMOUNT
+		
+		sp.scale.x = sp.scale.y = scale; // (2500 / this.duration) * 0.25;
+		this.duration = (1 / scale) * PARTICLES.BASE_DURATION; // 500 + Math.random() * 1000;
+		// 1500 - 0.125
+		// 750 - 0.25
+		// 325 - 0.5
 		sp.x 		  = Math.random() * SCENE.WIDTH;
 
+		this.rotationRate = PARTICLES.FRAMERATE * PARTICLES.FRAMERATE_VARIATION[0] + PARTICLES.FRAMERATE * Math.random() * (PARTICLES.FRAMERATE_VARIATION[1]-PARTICLES.FRAMERATE_VARIATION[0])
+console.log(this.rotationRate)
 		// Add the sprite particle to our particle effect
 		this.addChild(sp);
 		// Save a reference to the sprite particle
 		this.sp = sp;
-		console.log(this.sp)
+		console.log(order, this.sp)
 	}
 	animTick(timeProgress, timeDuration, timeGlobal) {
 		// Every update we get three different time variables: timeProgress, timeDuration and timeGlobal.
@@ -37,7 +48,7 @@ class ParticleSystem extends PIXI.Container {
 		//   timeGlobal: Global time in milliseconds,
 
 		// Set a new texture on a sprite particle
-		let num = ("000"+Math.floor((timeGlobal / PARTICLES.FRAMERATE) % 8)).substr(-3);
+		let num = ("000"+Math.floor(Math.round(timeGlobal / this.rotationRate) % 8)).substr(-3);
 		game.setTexture(this.sp,"CoinsGold"+num);
 
 		// Animate position
@@ -50,7 +61,7 @@ class ParticleSystem extends PIXI.Container {
 		this.sp.y = -this.sp.height/2 + timeProgress * (SCENE.HEIGHT+this.sp.height);
 		
 		// Animate scale
-		//this.sp.scale.x = this.sp.scale.y = 0.5; // timeProgress;
+9		//this.sp.scale.x = this.sp.scale.y = 0.5; // timeProgress;
 		
 		// Animate alpha
 		// this.sp.alpha = timeProgress;
@@ -59,8 +70,6 @@ class ParticleSystem extends PIXI.Container {
 		// this.sp.rotation = timeProgress*Math.PI*2;
 	}
 }
-
-// ----- End of the assigment ----- //
 
 class Game {
 	constructor(props) {
@@ -138,7 +147,7 @@ class Game {
 
 window.onload = function(){
 	window.game = new Game({onload:function(){
-		for (let i=0; i<10; i++)
-			game.addEffect(new ParticleSystem());
+		for (let i=0; i < PARTICLES.AMOUNT; i++)
+			game.addEffect(new ParticleSystem(i));
 	}});
 }
