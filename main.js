@@ -4,15 +4,17 @@ const SCENE = {
 }
 
 const PARTICLES = {
-	FRAMERATE: 2, // Frame-by-frame animation base framerate 
-	FRAMERATE_VARIATION: [0.99, 1.01], // Frame-by-frame animation framerate variation
-	AMOUNT: 50,
-	SIZE: [0.125, 0.5], // Coins size variation
-	BASE_DURATION: 250, // Normal duration of falling for the middle-size coin
-	PREDELAY: 1000 // Randomly time in ms "back" before the coin appears
+	FRAMETIME: 50, 			// Frame-by-frame animation base frame display time in ms 
+	FRAMETIME_VARIATION: [0.8, 1.2], // Frame-by-frame animation frame time variation
+	AMOUNT: 75,
+	SCALE: [0.125, 0.5], 	// Coins scale variation
+	BASE_DURATION: 250, 	// Base duration of the falling coin
+	ROTATIONTIME: 500,		// Full rotation time for the coin in ms 
+
+	PREDELAY: 1200 			// Randomly time in ms "back" before the coin appears
 }
 
-class ParticleSystem extends PIXI.Container {
+class Particle extends PIXI.Container {
 	constructor(order) {
 		super(order);
 
@@ -21,7 +23,8 @@ class ParticleSystem extends PIXI.Container {
 		this.start    = 0;
 		this.frame		= 0
 		this.progress = 1
-		this.delay = Math.random()
+		this.rotationAngle = Math.random() * Math.PI
+		this.rotationWay = Math.sign(Math.random() - 0.5)
 		
 		// Create a sprite
 		let sp        = game.sprite("CoinsGold000");
@@ -29,23 +32,18 @@ class ParticleSystem extends PIXI.Container {
 		sp.pivot.x    = sp.width/2;
 		sp.pivot.y    = sp.height/2;
 
-		const scale = PARTICLES.SIZE[0] + order * (PARTICLES.SIZE[1]-PARTICLES.SIZE[0]) / PARTICLES.AMOUNT
-		
-		sp.scale.x = sp.scale.y = scale; // (2500 / this.duration) * 0.25;
-		this.duration = (1 / scale) * PARTICLES.BASE_DURATION; // 500 + Math.random() * 1000;
-		// 1500 - 0.125
-		// 750 - 0.25
-		// 325 - 0.5
+		const scale = PARTICLES.SCALE[0] + order * (PARTICLES.SCALE[1]-PARTICLES.SCALE[0]) / PARTICLES.AMOUNT
+		sp.scale.x = sp.scale.y = scale;
+		this.duration = (1 / scale) * PARTICLES.BASE_DURATION; 
 		sp.x 		  = Math.random() * SCENE.WIDTH;
 		sp.y = -sp.height
 
-		this.rotationRate = PARTICLES.FRAMERATE * PARTICLES.FRAMERATE_VARIATION[0] + PARTICLES.FRAMERATE * Math.random() * (PARTICLES.FRAMERATE_VARIATION[1]-PARTICLES.FRAMERATE_VARIATION[0])
+		this.frameRate = PARTICLES.FRAMETIME * PARTICLES.FRAMETIME_VARIATION[0] + PARTICLES.FRAMETIME * Math.random() * (PARTICLES.FRAMETIME_VARIATION[1]-PARTICLES.FRAMETIME_VARIATION[0])
 
 		// Add the sprite particle to our particle effect
 		this.addChild(sp);
 		// Save a reference to the sprite particle
 		this.sp = sp;
-		console.log(order, this.sp)
 	}
 	animTick(timeProgress, timeDuration, timeGlobal) {
 		// Every update we get three different time variables: timeProgress, timeDuration and timeGlobal.
@@ -55,7 +53,7 @@ class ParticleSystem extends PIXI.Container {
 		//   timeGlobal: Global time in milliseconds,
 
 		// Set a new texture on a sprite particle
-		let num = ("000"+Math.floor(Math.round(timeGlobal / this.rotationRate) % 8)).substr(-3);
+		let num = ("000"+Math.floor(Math.round(timeGlobal / this.frameRate) % 8)).substr(-3);
 		game.setTexture(this.sp,"CoinsGold"+num);
 
 		// Animate position
@@ -74,7 +72,7 @@ class ParticleSystem extends PIXI.Container {
 		// this.sp.alpha = timeProgress;
 		// Animate rotation
 		
-		// this.sp.rotation = timeProgress*Math.PI*2;
+		this.sp.rotation = PARTICLES.ROTATIONTIME !== 0 ? this.rotationWay * (this.rotationAngle) * timeGlobal / PARTICLES.ROTATIONTIME : 0
 	}
 }
 
@@ -155,6 +153,6 @@ class Game {
 window.onload = function(){
 	window.game = new Game({onload:function(){
 		for (let i=0; i < PARTICLES.AMOUNT; i++)
-			game.addEffect(new ParticleSystem(i))
+			game.addEffect(new Particle(i))
 	}});
 }
