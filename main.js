@@ -1,20 +1,33 @@
 // ----- Start of the assigment ----- //
+const SCENE = {
+	WIDTH: 800,
+	HEIGHT: 450
+}
+
+const PARTICLES = {
+	FRAMERATE: 2
+}
 
 class ParticleSystem extends PIXI.Container {
 	constructor() {
 		super();
 		// Set start and duration for this effect in milliseconds
 		this.start    = 0;
-		this.duration = 500;
+		this.duration = 500 + Math.random() * 2000;
 		// Create a sprite
 		let sp        = game.sprite("CoinsGold000");
 		// Set pivot to center of said sprite
 		sp.pivot.x    = sp.width/2;
 		sp.pivot.y    = sp.height/2;
+
+		sp.scale.x = sp.scale.y = (2500 / this.duration) * 0.5;
+		sp.x 		  = Math.random() * SCENE.WIDTH;
+
 		// Add the sprite particle to our particle effect
 		this.addChild(sp);
 		// Save a reference to the sprite particle
 		this.sp = sp;
+		console.log(this.sp)
 	}
 	animTick(timeProgress, timeDuration, timeGlobal) {
 		// Every update we get three different time variables: timeProgress, timeDuration and timeGlobal.
@@ -24,17 +37,26 @@ class ParticleSystem extends PIXI.Container {
 		//   timeGlobal: Global time in milliseconds,
 
 		// Set a new texture on a sprite particle
-		let num = ("000"+Math.floor(timeProgress*8)).substr(-3);
+		let num = ("000"+Math.floor((timeGlobal / PARTICLES.FRAMERATE) % 8)).substr(-3);
 		game.setTexture(this.sp,"CoinsGold"+num);
+
 		// Animate position
-		this.sp.x = 400 + timeProgress*400;
-		this.sp.y = 225 + timeProgress*225;
+		// this.sp.x = 100; // + timeProgress*800;
+		if (timeProgress == 0.0) {
+			console.log(timeProgress)
+			this.sp.x = Math.random() * SCENE.WIDTH;
+		}
+
+		this.sp.y = -this.sp.height/2 + timeProgress * (SCENE.HEIGHT+this.sp.height);
+		
 		// Animate scale
-		this.sp.scale.x = this.sp.scale.y = timeProgress;
+		//this.sp.scale.x = this.sp.scale.y = 0.5; // timeProgress;
+		
 		// Animate alpha
-		this.sp.alpha = timeProgress;
+		// this.sp.alpha = timeProgress;
 		// Animate rotation
-		this.sp.rotation = timeProgress*Math.PI*2;
+		
+		// this.sp.rotation = timeProgress*Math.PI*2;
 	}
 }
 
@@ -44,7 +66,7 @@ class Game {
 	constructor(props) {
 		this.totalDuration = 0;
 		this.effects = [];
-		this.renderer = new PIXI.WebGLRenderer(800,450);
+		this.renderer = new PIXI.WebGLRenderer(SCENE.WIDTH, SCENE.HEIGHT);
 		document.body.appendChild(this.renderer.view);
 		this.stage = new PIXI.Container();
 		this.loadAssets(props&&props.onload);
@@ -84,7 +106,7 @@ class Game {
 		}
 	}
 	addEffect(effect) {
-		this.totalDuration = Math.max(this.totalDuration,(effect.duration + effect.start)||0);
+		this.totalDuration = Math.max(this.totalDuration, (effect.duration + effect.start)||0);
 		this.effects.push(effect);
 		this.stage.addChild(effect);
 	}
@@ -93,9 +115,12 @@ class Game {
 	}
 	tick() {
 		let timeGlobal = Date.now();
-		let timeDuration = (timeGlobal - this.timeStart) % this.totalDuration;
+		
 		for (let i=0; i < this.effects.length; i++) {
+			
 			let thisEffect = this.effects[i];
+			let timeDuration = (timeGlobal - this.timeStart) % thisEffect.duration // thisEffect.totalDuration;
+
 			if (timeDuration > thisEffect.start + thisEffect.duration || timeDuration < thisEffect.start) continue;
 			let estimateLeftTime = timeDuration - thisEffect.start;
 			let currentProgress = estimateLeftTime / thisEffect.duration;
@@ -113,6 +138,7 @@ class Game {
 
 window.onload = function(){
 	window.game = new Game({onload:function(){
-		game.addEffect(new ParticleSystem());
+		for (let i=0; i<10; i++)
+			game.addEffect(new ParticleSystem());
 	}});
 }
