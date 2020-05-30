@@ -19,139 +19,133 @@ class Particle extends PIXI.Container {
 		super(order);
 
 		this.timeStart = Date.now() + Math.round(Math.random() * PARTICLES.PREDELAY)
+		
 		// Set start and duration for this effect in milliseconds
-		this.start    = 0;
-		this.frame		= 0
+		this.start    = 0
+		this.frame	  = 0
 		this.progress = 1
 		this.rotationAngle = Math.random() * Math.PI
 		this.rotationWay = Math.sign(Math.random() - 0.5)
 		
 		// Create a sprite
-		let sp        = game.sprite("CoinsGold000");
-		// Set pivot to center of said sprite
-		sp.pivot.x    = sp.width/2;
-		sp.pivot.y    = sp.height/2;
+		let sp        = game.sprite("CoinsGold000")
 
-		const scale = PARTICLES.SCALE[0] + order * (PARTICLES.SCALE[1]-PARTICLES.SCALE[0]) / PARTICLES.AMOUNT
-		sp.scale.x = sp.scale.y = scale;
-		this.duration = (1 / scale) * PARTICLES.BASE_DURATION; 
-		sp.x 		  = Math.random() * SCENE.WIDTH;
-		sp.y = -sp.height
+		// Set pivot to center of said sprite
+		sp.pivot.x    = sp.width/2
+		sp.pivot.y    = sp.height/2
+
+		const scale   = PARTICLES.SCALE[0] + order * (PARTICLES.SCALE[1]-PARTICLES.SCALE[0]) / PARTICLES.AMOUNT
+		sp.scale.x = sp.scale.y = scale
+		this.duration = (1 / scale) * PARTICLES.BASE_DURATION
+		sp.x 		  = Math.random() * SCENE.WIDTH
+		sp.y 		  = -sp.height
 
 		this.frameRate = PARTICLES.FRAMETIME * PARTICLES.FRAMETIME_VARIATION[0] + PARTICLES.FRAMETIME * Math.random() * (PARTICLES.FRAMETIME_VARIATION[1]-PARTICLES.FRAMETIME_VARIATION[0])
 
 		// Add the sprite particle to our particle effect
-		this.addChild(sp);
+		this.addChild(sp)
 		// Save a reference to the sprite particle
-		this.sp = sp;
+		this.sp = sp
 	}
 	animTick(timeProgress, timeDuration, timeGlobal) {
 		// Every update we get three different time variables: timeProgress, timeDuration and timeGlobal.
 		//   timeProgress: Normalized time in procentage (0.0 to 1.0) and is calculated by
-		//       just dividing local time with duration of this effect.
+		//       		   just dividing local time with duration of this effect.
 		//   timeDuration: Local time in milliseconds, from 0 to this.duration.
-		//   timeGlobal: Global time in milliseconds,
+		//   timeGlobal:   Global time in milliseconds,
 
 		// Set a new texture on a sprite particle
-		let num = ("000"+Math.floor(Math.round(timeGlobal / this.frameRate) % 8)).substr(-3);
-		game.setTexture(this.sp,"CoinsGold"+num);
+		let num = ("000"+Math.floor(Math.round(timeGlobal / this.frameRate) % 8)).substr(-3)
+		game.setTexture(this.sp,"CoinsGold"+num)
 
 		// Animate position
-		// this.sp.x = 100; // + timeProgress*800;
 		if (timeProgress < this.progress) 
-			this.sp.x = Math.random() * SCENE.WIDTH;
+			this.sp.x = Math.random() * SCENE.WIDTH
 		this.progress = timeProgress
+		this.sp.y = -this.sp.height/2 + timeProgress * (SCENE.HEIGHT + this.sp.height)
 		
-		this.sp.y = -this.sp.height/2 + timeProgress * (SCENE.HEIGHT+this.sp.height);
-		
-		
-		// Animate scale
-		//this.sp.scale.x = this.sp.scale.y = 0.5; // timeProgress;
-		
-		// Animate alpha
-		// this.sp.alpha = timeProgress;
 		// Animate rotation
-		
 		this.sp.rotation = PARTICLES.ROTATIONTIME !== 0 ? this.rotationWay * (this.rotationAngle) * timeGlobal / PARTICLES.ROTATIONTIME : 0
 	}
 }
 
-class Game {
+class ParticleSystem {
 	constructor(props) {
-		this.totalDuration = 0;
-		this.effects = [];
-		this.renderer = new PIXI.WebGLRenderer(SCENE.WIDTH, SCENE.HEIGHT);
-		document.body.appendChild(this.renderer.view);
-		this.stage = new PIXI.Container();
-		this.loadAssets(props&&props.onload);
+		this.totalDuration = 0
+		this.effects = []
+		this.renderer = new PIXI.WebGLRenderer(SCENE.WIDTH, SCENE.HEIGHT)
+		document.body.appendChild(this.renderer.view)
+		this.stage = new PIXI.Container()
+		this.loadAssets(props&&props.onload)
 	}
 	loadAssets(cb) {
-		let textureNames = [];
+		let textureNames = []
+
 		// Load coin assets
 		for (let i=0; i<=8; i++) {
-			let num  = ("000"+i).substr(-3);
-			let name = "CoinsGold"+num;
-			let url  = "gfx/CoinsGold/"+num+".png";
-			textureNames.push(name);
-			PIXI.loader.add(name,url);
+			let num  = ("000"+i).substr(-3)
+			let name = "CoinsGold"+num
+			let url  = "gfx/CoinsGold/"+num+".png"
+			textureNames.push(name)
+			PIXI.loader.add(name,url)
 		}
 		PIXI.loader.load(function(loader,res){
 			// Access assets by name, not url
-			let keys = Object.keys(res);
+			let keys = Object.keys(res)
 			for (let i=0; i<keys.length; i++) {
-				var texture = res[keys[i]].texture;
-				if ( ! texture) continue;
-				PIXI.utils.TextureCache[keys[i]] = texture;
+				var texture = res[keys[i]].texture
+				if (!texture) continue
+				PIXI.utils.TextureCache[keys[i]] = texture
 			}
 			// Assets are loaded and ready!
-			this.start();
-			cb && cb();
+			this.start()
+			cb && cb()
 		}.bind(this));
 	}
 	start() {	
-		this.isRunning = true;
-		this.timeStart = Date.now();
-		update.bind(this)();
+		this.isRunning = true
+		this.timeStart = Date.now()
+		update.bind(this)()
 		function update(){
-			if ( ! this.isRunning) return;
-			this.tick();
-			this.render();
-			requestAnimationFrame(update.bind(this));
+			if (!this.isRunning) return
+			this.tick()
+			this.render()
+			requestAnimationFrame(update.bind(this))
 		}
 	}
 	addEffect(effect) {
-		this.totalDuration = Math.max(this.totalDuration, (effect.duration + effect.start)||0);
-		this.effects.push(effect);
-		this.stage.addChild(effect);
+		this.totalDuration = Math.max(this.totalDuration, (effect.duration + effect.start)||0)
+		this.effects.push(effect)
+		this.stage.addChild(effect)
 	}
 	render() {
-		this.renderer.render(this.stage);
+		this.renderer.render(this.stage)
 	}
 	tick() {
-		let timeGlobal = Date.now();
-		
+		let timeGlobal = Date.now()
 		for (let i=0; i < this.effects.length; i++) {
-			
-			let thisEffect = this.effects[i];
-			let timeDuration = (timeGlobal - thisEffect.timeStart) % thisEffect.duration // thisEffect.totalDuration;
+			let thisEffect = this.effects[i]
+			let timeDuration = (timeGlobal - thisEffect.timeStart) % thisEffect.duration 
 
-			if (timeDuration > thisEffect.start + thisEffect.duration || timeDuration < thisEffect.start) continue;
-			let estimateLeftTime = timeDuration - thisEffect.start;
-			let currentProgress = estimateLeftTime / thisEffect.duration;
-			thisEffect.animTick(currentProgress, estimateLeftTime, timeGlobal);
+			if (timeDuration > thisEffect.start + thisEffect.duration || timeDuration < thisEffect.start) 
+				continue
+
+			let estimateLeftTime = timeDuration - thisEffect.start
+			let currentProgress = estimateLeftTime / thisEffect.duration
+			thisEffect.animTick(currentProgress, estimateLeftTime, timeGlobal)
 		}
 	}
 	sprite(name) {
-		return new PIXI.Sprite(PIXI.utils.TextureCache[name]);
+		return new PIXI.Sprite(PIXI.utils.TextureCache[name])
 	}
 	setTexture(sp,name) {
-		sp.texture = PIXI.utils.TextureCache[name];
-		if ( ! sp.texture) console.warn("Texture '"+name+"' don't exist!")
+		sp.texture = PIXI.utils.TextureCache[name]
+		if (!sp.texture) console.warn("Texture '"+name+"' don't exist!")
 	}
 }
 
 window.onload = function(){
-	window.game = new Game({onload:function(){
+	window.game = new ParticleSystem({onload: () => {
 		for (let i=0; i < PARTICLES.AMOUNT; i++)
 			game.addEffect(new Particle(i))
 	}});
