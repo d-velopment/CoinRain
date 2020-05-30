@@ -11,14 +11,43 @@ const PARTICLES = {
 	BASE_DURATION: 250, 	// Base duration of the falling coin
 	ROTATIONTIME: 500,		// Full rotation time for the coin in ms 
 
-	PREDELAY: 1200 			// Randomly time in ms "back" before the coin appears
+	PREDELAY_LIMIT: 1200 	// Randomly time in ms "back" before the coin appears
+}
+
+const BIGWINTEXT = {		// Demo text to put in the middle of the particles falling
+	TITLE: 'BIG WIN',
+	STYLE: { 
+		font: 'bold 100pt Times New Roman', 
+		fill: 0x000000, 
+		dropShadow: true,
+		dropShadowBlur: 20,
+		dropShadowColor: '#ffff88',
+		dropShadowDistance: 0,
+		align: 'center' 
+	},
+	OPACITY: 0.75,
+	ZINDEX: 40				// 0 to disable demo text
+}
+
+class BigWinText extends PIXI.Container {
+	constructor() {
+		super()
+
+		var text = new PIXI.Text(BIGWINTEXT.TITLE, BIGWINTEXT.STYLE)
+		text.pivot.x = text.width/2
+		text.pivot.y = text.height/2
+		text.x = SCENE.WIDTH/2
+		text.y = SCENE.HEIGHT/2
+		text.alpha = 0.5
+		this.addChild(text)
+	}
 }
 
 class Particle extends PIXI.Container {
 	constructor(order) {
-		super(order);
+		super(order)
 
-		this.timeStart = Date.now() + Math.round(Math.random() * PARTICLES.PREDELAY)
+		this.timeStart = Date.now() + Math.round(Math.random() * PARTICLES.PREDELAY_LIMIT)
 		
 		// Set start and duration for this effect in milliseconds
 		this.start    = 0
@@ -56,7 +85,7 @@ class Particle extends PIXI.Container {
 
 		// Set a new texture on a sprite particle
 		let num = ("000"+Math.floor(Math.round(timeGlobal / this.frameRate) % 8)).substr(-3)
-		game.setTexture(this.sp,"CoinsGold"+num)
+		game.setTexture(this.sp, "CoinsGold"+num)
 
 		// Animate position
 		if (timeProgress < this.progress) 
@@ -146,7 +175,12 @@ class ParticleSystem {
 
 window.onload = function(){
 	window.game = new ParticleSystem({onload: () => {
-		for (let i=0; i < PARTICLES.AMOUNT; i++)
+		for (let i=0; i < PARTICLES.AMOUNT; i++) {
 			game.addEffect(new Particle(i))
-	}});
+
+			// Demo text
+			if (BIGWINTEXT.ZINDEX !==0 && i == Math.min(BIGWINTEXT.ZINDEX, PARTICLES.AMOUNT-1))
+				game.stage.addChild(new BigWinText())
+		}
+	}})
 }
