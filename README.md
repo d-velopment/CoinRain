@@ -1,6 +1,6 @@
 # CoinRain
 
-Example of the coins falling in space arount the "Big Win" text.
+Example of the coins falling in space around the "Big Win" text. Demo @ http://d-velopment.digital/coinrain/
 
 ## Play
 
